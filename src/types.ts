@@ -2,6 +2,11 @@ import type { CachedFnOptions } from "./CachedFn";
 
 export interface IComfyApiConfig {
   /**
+  * Optional Authorization header to send with requests
+  */
+  authorization?: string;
+  
+  /**
    * The host address of the API server, defaults to '127.0.0.1:8188'.
    * @type {string} [api_host="127.0.0.1:8188"]
    */

@@ -23,12 +23,16 @@ import { ComfyUiWsTypes } from "./ws.typs";
  */
 export class ComfyUIApiClient extends ComfyUIWsClient {
   private _cached_fn: CachedFn;
+  private _authHeader: Record<string, string>;
 
   constructor(config: IComfyApiConfig) {
     super(config);
 
     const cache_ns = `${config.api_host}`;
     this._cached_fn = new CachedFn(cache_ns, config.cache);
+
+    this._authHeader =
+      this.auth !== "" ? { Authorization: `${this.auth}` } : {};
   }
 
   /**
@@ -37,7 +41,12 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
    */
   async getExtensions(): Promise<string[]> {
     const invoke = async () => {
-      const resp = await this.fetchApi("/extensions", { cache: "no-store" });
+      const resp = await this.fetchApi("/extensions", {
+        cache: "no-store",
+        headers: {
+          ...this._authHeader,
+        },
+      });
       return await resp.json();
     };
     const cached = this._cached_fn.warp("extensions", invoke);
@@ -50,7 +59,12 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
    */
   async getEmbeddings(): Promise<string[]> {
     const invoke = async () => {
-      const resp = await this.fetchApi("/embeddings", { cache: "no-store" });
+      const resp = await this.fetchApi("/embeddings", {
+        cache: "no-store",
+        headers: {
+          ...this._authHeader,
+        },
+      });
       return await resp.json();
     };
     const cached = this._cached_fn.warp("embeddings", invoke);
@@ -63,7 +77,12 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
    */
   async getNodeDefs(): Promise<ComfyUIClientResponseTypes.ObjectInfo> {
     const invoke = async () => {
-      const resp = await this.fetchApi("/object_info", { cache: "no-store" });
+      const resp = await this.fetchApi("/object_info", {
+        cache: "no-store",
+        headers: {
+          ...this._authHeader,
+        },
+      });
       const node_defs = await resp.json();
       return node_defs;
     };
@@ -106,6 +125,7 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...this._authHeader,
       },
       body: JSON.stringify(body),
     });
@@ -147,7 +167,11 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
     Pending: Array<Record<string, unknown>>;
   }> {
     try {
-      const res = await this.fetchApi("/queue");
+      const res = await this.fetchApi("/queue", {
+        headers: {
+          ...this._authHeader,
+        },
+      });
       const data = await res.json();
       return {
         Running: data.queue_running.map((prompt: any) => ({
@@ -179,7 +203,11 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
     }>;
   }> {
     try {
-      const res = await this.fetchApi(`/history?max_items=${max_items}`);
+      const res = await this.fetchApi(`/history?max_items=${max_items}`, {
+        headers: {
+          ...this._authHeader,
+        },
+      });
       return { History: Object.values(await res.json()) };
     } catch (error) {
       console.error(error);
@@ -193,7 +221,11 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
    */
 
   async getSystemStats(): Promise<ComfyUIClientResponseTypes.SystemStatsRoot> {
-    const res = await this.fetchApi("/system_stats");
+    const res = await this.fetchApi("/system_stats", {
+      headers: {
+        ...this._authHeader,
+      },
+    });
     return res.json();
   }
 
@@ -207,6 +239,7 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...this._authHeader,
       },
       body: body ? JSON.stringify(body) : undefined,
     });
@@ -248,7 +281,13 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
    * @returns { Promise<{ storage: "server" | "browser", users?: Promise<string, unknown>, migrated?: boolean }> }
    */
   async getUserConfig() {
-    return (await this.fetchApi("/users")).json();
+    return (
+      await this.fetchApi("/users", {
+        headers: {
+          ...this._authHeader,
+        },
+      })
+    ).json();
   }
 
   /**
@@ -261,6 +300,7 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...this._authHeader,
       },
       body: JSON.stringify({ username }),
     });
@@ -271,7 +311,13 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
    * @returns { Promise<string, unknown> } A dictionary of id -> value
    */
   async getSettings(): Promise<Record<string, unknown>> {
-    return (await this.fetchApi("/settings")).json();
+    return (
+      await this.fetchApi("/settings", {
+        headers: {
+          ...this._authHeader,
+        },
+      })
+    ).json();
   }
 
   /**
@@ -280,7 +326,13 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
    * @returns { Promise<unknown> } The setting value
    */
   async getSetting(id: string): Promise<unknown> {
-    return (await this.fetchApi(`/settings/${encodeURIComponent(id)}`)).json();
+    return (
+      await this.fetchApi(`/settings/${encodeURIComponent(id)}`, {
+        headers: {
+          ...this._authHeader,
+        },
+      })
+    ).json();
   }
 
   /**
@@ -292,6 +344,9 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
     return this.fetchApi(`/settings`, {
       method: "POST",
       body: JSON.stringify(settings),
+      headers: {
+        ...this._authHeader,
+      },
     });
   }
 
@@ -305,6 +360,9 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
     return this.fetchApi(`/settings/${encodeURIComponent(id)}`, {
       method: "POST",
       body: JSON.stringify(value),
+      headers: {
+        ...this._authHeader,
+      },
     });
   }
 
@@ -333,6 +391,9 @@ export class ComfyUIApiClient extends ComfyUIWsClient {
     const resp = await this.fetchApi(`/userdata/${encodeURIComponent(file)}`, {
       method: "POST",
       body: options?.stringify ? JSON.stringify(data) : data,
+      headers: {
+        ...this._authHeader,
+      },
       ...options,
     });
     if (resp.status !== 200) {

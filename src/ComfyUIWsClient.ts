@@ -84,6 +84,7 @@ export class ComfyUIWsClient {
     }
   }
 
+  auth: string;
   api_host: string;
   api_base: string;
   clientId?: string;
@@ -100,6 +101,7 @@ export class ComfyUIWsClient {
   protected socket_callbacks: Record<string, any> = {};
 
   constructor(config: IComfyApiConfig) {
+    this.auth = config.auth ?? "";
     this.api_host = config.api_host ?? ComfyUIWsClient.DEFAULT_API_HOST;
     this.api_base = config.api_base ?? ComfyUIWsClient.DEFAULT_API_BASE;
     this.clientId = config.clientId ?? uuidv4();

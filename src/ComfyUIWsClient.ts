@@ -1,5 +1,6 @@
 import { IComfyApiConfig } from "./types";
 import { EventEmitter } from "eventemitter3";
+import WebSocket from "ws";
 import { ComfyUiWsTypes } from "./ws.typs";
 import { uuidv4 } from "./misc";
 
@@ -53,6 +54,8 @@ type ComfyUIClientEvents = {
  * client.close();
  */
 export class ComfyUIWsClient {
+  protected _authHeader: Record<string, string>;
+
   static DEFAULT_API_HOST = "127.0.0.1:8188";
   static DEFAULT_API_BASE = "";
   static DEFAULT_USER = "";
@@ -112,6 +115,8 @@ export class ComfyUIWsClient {
       throw new Error("fetch is not defined");
     }
     this.fetch = config.fetch ?? globalThis.fetch.bind(globalThis);
+    this._authHeader =
+      this.auth !== "" ? { Authorization: `${this.auth}` } : {};
   }
 
   /**
@@ -278,7 +283,13 @@ export class ComfyUIWsClient {
     this.socket = new this.WebSocket(
       `ws${this.ssl ? "s" : ""}://${this.api_host}${
         this.api_base
-      }/ws${existingSession}`
+      }/ws${existingSession}`,
+      [],
+      {
+        headers: {
+          ...this._authHeader,
+        },
+      }
     );
     this.socket.binaryType = "arraybuffer";
 

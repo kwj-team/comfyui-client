@@ -23,7 +23,6 @@ import { ComfyUiWsTypes } from "./ws.typs";
  */
 export class ComfyUIApiClient extends ComfyUIWsClient {
   private _cached_fn: CachedFn;
-  private _authHeader: Record<string, string>;
 
   constructor(config: IComfyApiConfig) {
     super(config);
